@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
@@ -18,7 +17,6 @@ import java.util.List;
 public class MovieAdapter  extends ArrayAdapter<MovieData> {
     private static final String LOG_TAG = MovieAdapter.class.getSimpleName();
 
-    private static String BASE_IMAGE_URL = "http://image.tmdb.org/t/p/w185";
 
     /**
      * This is our own custom constructor (it doesn't mirror a superclass constructor).
@@ -64,10 +62,7 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
         }
 
         ImageView posterView = (ImageView) convertView.findViewById(R.id.movie_image);
-        Picasso.with(getContext()).load(BASE_IMAGE_URL + movie.imageUrl).into(posterView);
-
-        TextView versionNameView = (TextView) convertView.findViewById(R.id.movie_title);
-        versionNameView.setText(movie.title);
+        Picasso.with(getContext()).load(Utility.BASE_IMAGE_URL + movie.imageUrl).into(posterView);
 
 
         return convertView;

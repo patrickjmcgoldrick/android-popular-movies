@@ -29,6 +29,9 @@ public class MovieJsonParser {
             int id;
             String title;
             String posterUrl;
+            String description;
+            String releaseDate;
+            double userRating;
 
             for (int i=0; i< results.length(); i++) {
                 JSONObject movie = results.getJSONObject(i);
@@ -36,8 +39,11 @@ public class MovieJsonParser {
                 id = movie.getInt("id");
                 title = movie.getString("original_title");
                 posterUrl = movie.getString("poster_path");
+                description = movie.getString("overview");
+                releaseDate = movie.getString("release_date");
+                userRating = movie.getDouble("vote_average");
 
-                MovieData movieData = new MovieData(id, title, posterUrl);
+                MovieData movieData = new MovieData(id, title, posterUrl, description, releaseDate, userRating);
                 movies.add(movieData);
             }
 

@@ -39,6 +39,8 @@ public class FetchMovieDataTask extends AsyncTask<String, String, List<MovieData
             return null;
         }
 
+        System.out.println(response);
+
         MovieJsonParser parser = new MovieJsonParser();
         List<MovieData> movies = parser.parse(response);
 
