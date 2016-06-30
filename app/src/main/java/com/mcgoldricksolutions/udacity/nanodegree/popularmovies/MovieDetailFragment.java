@@ -65,7 +65,7 @@ public class MovieDetailFragment extends Fragment {
 
 
             ((TextView) rootView.findViewById(R.id.movie_description)).setText(mMovie.description);
-            ((TextView) rootView.findViewById(R.id.movie_release_date)).setText(mMovie.releaseDate);
+            ((TextView) rootView.findViewById(R.id.movie_release_date)).setText(mMovie.getReleaseDateYear());
             //((TextView) rootView.findViewById(R.id.movie_description)).setText(mMovie.description);
             ((TextView) rootView.findViewById(R.id.movie_user_rating)).setText(mMovie.userRating + "/10");
 

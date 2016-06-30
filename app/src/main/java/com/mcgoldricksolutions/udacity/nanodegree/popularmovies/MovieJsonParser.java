@@ -9,6 +9,9 @@ import java.util.List;
 
 /**
  * Created by dirtbag on 6/19/16.
+ *
+ * Takes care of parsing movie list data and converting each movie item into
+ * MovieData object.
  */
 public class MovieJsonParser {
 
@@ -19,37 +22,33 @@ public class MovieJsonParser {
      * @param jsonString
      * @return
      */
-    public List<MovieData> parse(String jsonString) {
+    public List<MovieData> parse(String jsonString) throws JSONException {
         ArrayList<MovieData> movies = new ArrayList<>();
 
-        try {
-            JSONObject object = new JSONObject(jsonString);
-            JSONArray results = object.getJSONArray("results");
+        JSONObject object = new JSONObject(jsonString);
+        JSONArray results = object.getJSONArray("results");
 
-            int id;
-            String title;
-            String posterUrl;
-            String description;
-            String releaseDate;
-            double userRating;
+        int id;
+        String title;
+        String posterUrl;
+        String description;
+        String releaseDate;
+        double userRating;
 
-            for (int i=0; i< results.length(); i++) {
-                JSONObject movie = results.getJSONObject(i);
+        for (int i=0; i< results.length(); i++) {
+            JSONObject movie = results.getJSONObject(i);
 
-                id = movie.getInt("id");
-                title = movie.getString("original_title");
-                posterUrl = movie.getString("poster_path");
-                description = movie.getString("overview");
-                releaseDate = movie.getString("release_date");
-                userRating = movie.getDouble("vote_average");
+            id = movie.getInt("id");
+            title = movie.getString("original_title");
+            posterUrl = movie.getString("poster_path");
+            description = movie.getString("overview");
+            releaseDate = movie.getString("release_date");
+            userRating = movie.getDouble("vote_average");
 
-                MovieData movieData = new MovieData(id, title, posterUrl, description, releaseDate, userRating);
-                movies.add(movieData);
-            }
-
-        } catch (JSONException jsone) {
-            return null;
+            MovieData movieData = new MovieData(id, title, posterUrl, description, releaseDate, userRating);
+            movies.add(movieData);
         }
+
         return movies;
     }
 }

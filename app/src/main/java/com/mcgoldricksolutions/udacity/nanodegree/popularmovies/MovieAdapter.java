@@ -9,14 +9,22 @@ import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * Created by dirtbag on 6/18/16.
+ *
+ * Adapter that holds movie data for grid view.
  */
 public class MovieAdapter  extends ArrayAdapter<MovieData> {
+
     private static final String LOG_TAG = MovieAdapter.class.getSimpleName();
 
+    /**
+     * Save previously looked up data in a HashMap.
+     */
+    HashMap<String, List<MovieData>> movieDataLookup = new HashMap<>();
 
     /**
      * This is our own custom constructor (it doesn't mirror a superclass constructor).
@@ -32,12 +40,49 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
         // Because this is a custom adapter for two TextViews and an ImageView, the adapter is not
         // going to use this second argument, so it can be any value. Here, we used 0.
         super(context, 0, movies);
+
+        switchMovieData(Utility.API_MOST_POPULAR);
     }
 
-    public void updateMovieData(List<MovieData> movieData) {
-        //clear();
-        addAll(movieData);
+    /**
+     *  Test for previously looked up data.  If found, user appropriate saved data.
+     *  Otherwise, Load data from url and save for later reuse.
+     */
+    public void switchMovieData(String suffix) {
+        List<MovieData> data = movieDataLookup.get(suffix);
+        if (data == null) {
+            FetchMovieDataTask fetchTask = new FetchMovieDataTask(this);
+            fetchTask.execute(suffix);
+
+        } else { // replace with previously looked up data
+            updateMovieData(null, data);
+        }
+
     }
+
+    /**
+     * Allow the UI to call into adapter to switch out the relevant data.
+     *
+     * @param suffix
+     * @param movieData
+     */
+    public void updateMovieData(String suffix, List<MovieData> movieData) {
+        // if new data, add to HashMap
+        if(suffix != null) {
+            movieDataLookup.put(suffix, movieData);
+        }
+
+        // clear previous data
+        clear();
+
+        // update adapter with chnanged data
+        addAll(movieData);
+
+        // refresh UI
+        notifyDataSetChanged();
+
+    }
+
     /**
      * Provides a view for an AdapterView (ListView, GridView, etc.)
      *
@@ -67,4 +112,5 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
 
         return convertView;
     }
+
 }

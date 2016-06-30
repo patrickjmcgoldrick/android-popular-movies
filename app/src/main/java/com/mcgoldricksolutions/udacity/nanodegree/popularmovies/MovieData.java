@@ -15,6 +15,13 @@ public class MovieData implements Parcelable {
     public String releaseDate;
     public double userRating;
 
+    public String getReleaseDateYear() {
+        if (releaseDate != null) {
+            return releaseDate.substring(0,4);
+        }
+        return "";
+    }
+
     public MovieData (int vId, String vTitle, String vImageUrl, String vDescription, String vReleaseDate, double vUserRating ) {
         this.id = vId;
         this.title = vTitle;
