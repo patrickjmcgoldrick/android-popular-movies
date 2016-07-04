@@ -7,8 +7,11 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -27,7 +30,7 @@ public class MovieDetailFragment extends Fragment {
 
     public static final String ARG_MOVIE_DETAIL = "movie_detail";
 
-    MovieData mMovie;
+    private MovieData mMovie;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -69,6 +72,33 @@ public class MovieDetailFragment extends Fragment {
             //((TextView) rootView.findViewById(R.id.movie_description)).setText(mMovie.description);
             ((TextView) rootView.findViewById(R.id.movie_user_rating)).setText(mMovie.userRating + "/10");
 
+            Button btnFavorite = (Button) rootView.findViewById(R.id.btn_favorite);
+            btnFavorite.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Toast.makeText(getContext(),
+                            "id: " + MovieDetailFragment.this.mMovie.id,
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            ListView trailerList = (ListView) rootView.findViewById(R.id.list_trailers);
+
+            JsonTrailerAdapter trailerAdapter = new JsonTrailerAdapter(this.getContext());
+            FetchTrailersTask fetchTrailers = new FetchTrailersTask(trailerAdapter);
+
+            String trailersURL = Utility.BASE_URL
+                    + Utility.MOVIE + mMovie.id
+                    + Utility.TRAILERS
+                    + Utility.API_PARAMETER + Key.API_KEY;
+            fetchTrailers.execute(trailersURL);
+
+//            TextView trailerListHeader = new TextView(getContext());
+//            trailerListHeader.setText("Trailers");
+//            trailerList.addHeaderView(trailerListHeader);
+            trailerList.setAdapter(trailerAdapter);
+
+            trailerList.setOnItemClickListener(trailerAdapter);
         }
 
         return rootView;

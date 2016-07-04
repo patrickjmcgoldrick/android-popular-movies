@@ -1,7 +1,11 @@
 package com.mcgoldricksolutions.udacity.nanodegree.popularmovies;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -23,8 +27,10 @@ import java.util.ArrayList;
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  */
-public class MovieListActivity extends AppCompatActivity  {
+public class MovieListActivity extends AppCompatActivity
+    implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    //private MovieCursorAdapter movieAdapter;
     private MovieAdapter movieAdapter;
 
 
@@ -34,7 +40,7 @@ public class MovieListActivity extends AppCompatActivity  {
      */
     private boolean mTwoPane;
 
-
+    private static final int FAVORTE_LOADER_ID = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,8 +51,11 @@ public class MovieListActivity extends AppCompatActivity  {
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
+        //Cursor movieCursor = getContentResolver().query()
+        //movieAdapter = new MovieCursorAdapter(this, movieCursor, 0);
         movieAdapter = new MovieAdapter(this, new ArrayList<MovieData>());
 
+        //getLoaderManager().initLoader(FAVORTE_LOADER_ID, null, this);
 
         // Get a reference to the ListView, and attach this adapter to it.
         GridView gridView = (GridView) findViewById(R.id.movies_grid);
@@ -118,4 +127,23 @@ public class MovieListActivity extends AppCompatActivity  {
         return super.onOptionsItemSelected(item);
     }
 
+
+    //////////////////////////
+    // Loader Callbacks
+    //////////////////////////
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
+        return new CursorLoader(this);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        //movieAdapter.swapCursor(cursor);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+        //movieAdapter.swapCursor(null);
+    }
 }

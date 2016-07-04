@@ -16,9 +16,6 @@ import java.util.ArrayList;
  */
 public class MainActivityFragment extends Fragment {
 
-    static String BASE_URL = "http://api.themoviedb.org/3";
-    static String API_MOST_POPULAR = "/movie/popular";
-    static String API_TOP_RATED = "/movie/top_rated";
 
 
     private MovieAdapter movieAdapter;
@@ -35,7 +32,7 @@ public class MainActivityFragment extends Fragment {
         movieAdapter = new MovieAdapter(getActivity(), new ArrayList<MovieData>());
 
         FetchMovieDataTask fetchTask = new FetchMovieDataTask(movieAdapter);
-        fetchTask.execute(BASE_URL + API_MOST_POPULAR + "?api_key=" + Key.API_KEY);
+        fetchTask.execute(Utility.BASE_URL + Utility.API_MOST_POPULAR + Utility.API_PARAMETER + Key.API_KEY);
 
         // Get a reference to the ListView, and attach this adapter to it.
         GridView gridView = (GridView) rootView.findViewById(R.id.movies_grid);
