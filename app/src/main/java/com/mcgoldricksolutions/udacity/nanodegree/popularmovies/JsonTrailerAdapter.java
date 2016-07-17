@@ -183,6 +183,9 @@ public class JsonTrailerAdapter extends BaseAdapter
             Log.e(LOG_NAME, "failed to access Trailer 'source'.");
             return;
         }
+
+        // stack overflow
+        // http://stackoverflow.com/questions/574195/android-youtube-app-play-video-intent
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + movie_id));
             mContext.startActivity(intent);
