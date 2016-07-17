@@ -1,9 +1,13 @@
 package com.mcgoldricksolutions.udacity.nanodegree.popularmovies;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +17,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.mcgoldricksolutions.udacity.nanodegree.popularmovies.data.FavoriteContract;
 import com.squareup.picasso.Picasso;
 
 /**
@@ -79,6 +84,13 @@ public class MovieDetailFragment extends Fragment {
                     Toast.makeText(getContext(),
                             "id: " + MovieDetailFragment.this.mMovie.id,
                             Toast.LENGTH_SHORT).show();
+                    ContentValues values = new ContentValues();
+                    values.put(FavoriteContract.FavoriteEntry.COLUMN_MOVIE_ID, MovieDetailFragment.this.mMovie.id);
+                    values.put(FavoriteContract.FavoriteEntry.COLUMN_POSTER_URL, MovieDetailFragment.this.mMovie.imageUrl);
+                    values.put(FavoriteContract.FavoriteEntry.COLUMN_CATEGORY, FavoriteContract.FavoriteEntry.CATEGORY_TYPE_FAVORITE);
+                    ContentResolver resolver = getContext().getContentResolver();
+                    Uri uri = resolver.insert(FavoriteContract.FavoriteEntry.CONTENT_URI, values);
+                    Log.d("MovieDetailFragment", "return URI: " + uri);
                 }
             });
 

@@ -1,6 +1,11 @@
 package com.mcgoldricksolutions.udacity.nanodegree.popularmovies;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -12,10 +17,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.CompoundButton;
 import android.widget.GridView;
-import android.widget.Switch;
 import android.widget.Toast;
+
+import com.mcgoldricksolutions.udacity.nanodegree.popularmovies.data.FavoriteContract;
 
 import java.util.ArrayList;
 
@@ -41,6 +46,13 @@ public class MovieListActivity extends AppCompatActivity
     private boolean mTwoPane;
 
     private static final int FAVORTE_LOADER_ID = 0;
+
+    /**
+     * The filter choice is stored here until the "OK" button
+     * of the dialog confirms a change and then the preferenc
+     * will be updated.
+     */
+    private int temp_filter_choice = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,23 +103,6 @@ public class MovieListActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
-        MenuItem item = menu.findItem(R.id.sort_switch);
-        Switch orderToggle = (Switch)item.getActionView().findViewById(R.id.sort_order_switch);
-
-        orderToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton orderSwtich, boolean state) {
-                if(state == true) {
-                    orderSwtich.setText("Sort: Top Rated");
-                    movieAdapter.switchMovieData(Utility.API_TOP_RATED);
-
-                } else {
-                    orderSwtich.setText("Sort: Popular");
-                    movieAdapter.switchMovieData(Utility.API_MOST_POPULAR);
-
-                }
-            }
-        });
 
         return true;
     }
@@ -119,14 +114,74 @@ public class MovieListActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
+        if (id == R.id.action_settings) {
+
+            // popup dialog
+            createDialogSingleChoice().show();
+
+            return true;
+        }
+
         Toast.makeText(this, "Item: " + item.toString(), Toast.LENGTH_LONG).show();
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Create Dialog for movie filter
+     *
+     * Content from: https://abhik1987.wordpress.com/2013/02/06/android-alert-dialog-with-single-choice-item-selection-implementation/
+     * @return
+     */
+    public Dialog createDialogSingleChoice() {
+
+        //Initialize the Alert Dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        SharedPreferences prefs =
+                MovieListActivity.this.getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY,
+                        Context.MODE_PRIVATE);
+        int initialFilterStatus = prefs.getInt(Utility.FILTER_TYPE, 0); // default to most popular
+
+        // Set the dialog title
+        builder.setTitle("Select Filter:")
+            // setup choice with list of filters
+           .setSingleChoiceItems(R.array.filter_array, initialFilterStatus, new DialogInterface.OnClickListener() {
+
+                @Override
+                public void onClick(DialogInterface dialog, int filter_choice_id) {
+                    // TODO Auto-generated method stub
+                    temp_filter_choice = filter_choice_id;
+                }
+            })
+
+            // set dialog icon
+            .setIcon(android.R.drawable.ic_dialog_alert)
+
+            // Set the action buttons
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+                    // User clicked OK, so save the result somewhere
+                    // or return them to the component that opened the dialog
+                    SharedPreferences prefs =
+                            MovieListActivity.this.getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY,
+                                                                        Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putInt(Utility.FILTER_TYPE, temp_filter_choice);
+                    editor.apply();
+
+                    movieAdapter.switchMovieData();
+                }
+            })
+            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+
+                }
+            });
+
+        return builder.create();
+    }
 
     //////////////////////////
     // Loader Callbacks

@@ -14,4 +14,12 @@ public class Utility {
     public static final String MOVIE = "/movie/";
     public static final String TRAILERS = "/trailers";
     public static final String REVIEWS = "/reviews";
+
+    public static final String FILTER_TYPE = "filter_type";
+
+    public static final int POPULAR = 0;
+    public static final int TOP_RATED = 1;
+    public static final int FAVORITES = 2;
+
+
 }

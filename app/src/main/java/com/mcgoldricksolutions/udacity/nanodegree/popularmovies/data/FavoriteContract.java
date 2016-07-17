@@ -25,17 +25,17 @@ public class FavoriteContract {
     // looking at weather data. content://com.example.android.sunshine.app/givemeroot/ will fail,
     // as the ContentProvider hasn't been given any information on what to do with "givemeroot".
     // At least, let's hope not.  Don't be that dev, reader.  Don't be that dev.
-    public static final String PATH_FAVORITE = "favorite";
+    public static final String BASE_PATH = "favorite";
 
     public static final class FavoriteEntry implements BaseColumns {
 
         public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE).build();
+                BASE_CONTENT_URI.buildUpon().appendPath(BASE_PATH).build();
 
         public static final String CONTENT_TYPE =
-                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + BASE_PATH;
         public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_FAVORITE;
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + BASE_PATH;
 
 
         public static final String TABLE_NAME = "favorite";
@@ -48,6 +48,10 @@ public class FavoriteContract {
 
         // Movie Category
         public static final String COLUMN_CATEGORY = "category";
+
+        public static final int CATEGORY_TYPE_POPULAR = 0;
+        public static final int CATEGORY_TYPE_TOP_RATED = 1;
+        public static final int CATEGORY_TYPE_FAVORITE = 2;
 
 
         public static Uri buildFavoriteUri(long id) {

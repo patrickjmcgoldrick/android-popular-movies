@@ -29,6 +29,7 @@ public class FavoriteDbHelper extends SQLiteOpenHelper {
                 // the ID of the movie from API
                 FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
                 FavoriteEntry.COLUMN_POSTER_URL + " TEXT NOT NULL, " +
+                FavoriteEntry.COLUMN_CATEGORY + " INTEGER NOT NULL, " +
 
                 // Avoid duplicates
                 " UNIQUE (" + FavoriteEntry.COLUMN_MOVIE_ID + ") ON CONFLICT REPLACE);";

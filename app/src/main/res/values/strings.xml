@@ -5,8 +5,9 @@
     <string name="title_movie_list">Movies</string>
     <string name="title_movie_detail">Movie Detail</string>
 
-    <string-array name="spinner_list_item_array">
+    <string-array name="filter_array">
         <item>Popular</item>
         <item>Top Rated</item>
+        <item>Favorites</item>
     </string-array>
 </resources>

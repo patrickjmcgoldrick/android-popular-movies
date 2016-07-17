@@ -1,15 +1,17 @@
 package com.mcgoldricksolutions.udacity.nanodegree.popularmovies;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
+import com.mcgoldricksolutions.udacity.nanodegree.popularmovies.data.FavoriteContract;
 import com.squareup.picasso.Picasso;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -24,7 +26,7 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
     /**
      * Save previously looked up data in a HashMap.
      */
-    HashMap<String, List<MovieData>> movieDataLookup = new HashMap<>();
+    //HashMap<String, List<MovieData>> movieDataLookup = new HashMap<>();
 
     /**
      * This is our own custom constructor (it doesn't mirror a superclass constructor).
@@ -41,22 +43,42 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
         // going to use this second argument, so it can be any value. Here, we used 0.
         super(context, 0, movies);
 
-        switchMovieData(Utility.API_MOST_POPULAR);
+        switchMovieData();
     }
 
     /**
      *  Test for previously looked up data.  If found, user appropriate saved data.
      *  Otherwise, Load data from url and save for later reuse.
      */
-    public void switchMovieData(String suffix) {
-        List<MovieData> data = movieDataLookup.get(suffix);
-        if (data == null) {
-            FetchMovieDataTask fetchTask = new FetchMovieDataTask(this);
-            fetchTask.execute(suffix);
+    public void switchMovieData() {
 
-        } else { // replace with previously looked up data
-            updateMovieData(null, data);
+        SharedPreferences prefs = getContext().getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY, Context.MODE_PRIVATE);
+        int filter_type = prefs.getInt(Utility.FILTER_TYPE, 0);
+
+        String filterName = null;
+
+        switch (filter_type) {
+            case Utility.POPULAR:
+                filterName = Utility.API_MOST_POPULAR;
+                break;
+
+            case Utility.TOP_RATED:
+                filterName = Utility.API_TOP_RATED;
+                break;
+
+            case Utility.FAVORITES:
+
+
+
+                break;
+            default:
+                // error handling
         }
+
+
+        FetchMovieDataTask fetchTask = new FetchMovieDataTask(this);
+        fetchTask.execute(filterName);
+
 
     }
 
@@ -67,10 +89,10 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
      * @param movieData
      */
     public void updateMovieData(String suffix, List<MovieData> movieData) {
-        // if new data, add to HashMap
-        if(suffix != null) {
-            movieDataLookup.put(suffix, movieData);
-        }
+//        // if new data, add to HashMap
+//        if(suffix != null) {
+//            movieDataLookup.put(suffix, movieData);
+//        }
 
         // clear previous data
         clear();
