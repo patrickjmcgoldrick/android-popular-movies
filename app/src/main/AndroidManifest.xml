@@ -31,6 +31,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.mcgoldricksolutions.udacity.nanodegree.popularmovies.MovieListActivity" />
         </activity>
+
+        <provider
+            android:authorities="com.mcgoldricksolutions.udacity.nanodegree.popularmovies"
+            android:name=".data.FavoriteProvider" />
     </application>
 
 </manifest>
