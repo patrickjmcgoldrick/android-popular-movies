@@ -6,7 +6,7 @@ import android.content.ContentValues;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,7 +26,7 @@ import com.squareup.picasso.Picasso;
  * in two-pane mode (on tablets) or a {@link MovieDetailActivity}
  * on handsets.
  */
-public class MovieDetailFragment extends Fragment {
+public class MovieDetailFragment extends ListFragment {
     /**
      * The fragment argument representing the item ID that this fragment
      * represents.
@@ -62,22 +62,33 @@ public class MovieDetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.movie_detail, container, false);
+
+        View view = inflater.inflate(R.layout.fragment_detail, container, false);
+        return view;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        ListView listView = getListView();
 
         // Show the dummy content as text in a TextView.
         if (mMovie != null) {
-            ((TextView) rootView.findViewById(R.id.movie_title)).setText(mMovie.title);
+            View headerView = getLayoutInflater(savedInstanceState).inflate(R.layout.movie_detail, listView, false);
 
-            ImageView posterThumbnail = (ImageView) rootView.findViewById(R.id.movie_thumbnail);
+            ((TextView) headerView.findViewById(R.id.movie_title)).setText(mMovie.title);
+
+            ImageView posterThumbnail = (ImageView) headerView.findViewById(R.id.movie_thumbnail);
             Picasso.with(getContext()).load(Utility.BASE_IMAGE_URL + mMovie.imageUrl).into(posterThumbnail);
 
 
-            ((TextView) rootView.findViewById(R.id.movie_description)).setText(mMovie.description);
-            ((TextView) rootView.findViewById(R.id.movie_release_date)).setText(mMovie.getReleaseDateYear());
+            ((TextView) headerView.findViewById(R.id.movie_description)).setText(mMovie.description);
+            ((TextView) headerView.findViewById(R.id.movie_release_date)).setText(mMovie.getReleaseDateYear());
             //((TextView) rootView.findViewById(R.id.movie_description)).setText(mMovie.description);
-            ((TextView) rootView.findViewById(R.id.movie_user_rating)).setText(mMovie.userRating + "/10");
+            ((TextView) headerView.findViewById(R.id.movie_user_rating)).setText(mMovie.userRating + "/10");
 
-            Button btnFavorite = (Button) rootView.findViewById(R.id.btn_favorite);
+            Button btnFavorite = (Button) headerView.findViewById(R.id.btn_favorite);
             btnFavorite.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -86,33 +97,45 @@ public class MovieDetailFragment extends Fragment {
                             Toast.LENGTH_SHORT).show();
                     ContentValues values = new ContentValues();
                     values.put(FavoriteContract.FavoriteEntry.COLUMN_MOVIE_ID, MovieDetailFragment.this.mMovie.id);
+                    values.put(FavoriteContract.FavoriteEntry.COLUMN_TITLE, MovieDetailFragment.this.mMovie.title);
                     values.put(FavoriteContract.FavoriteEntry.COLUMN_POSTER_URL, MovieDetailFragment.this.mMovie.imageUrl);
-                    values.put(FavoriteContract.FavoriteEntry.COLUMN_CATEGORY, FavoriteContract.FavoriteEntry.CATEGORY_TYPE_FAVORITE);
+                    values.put(FavoriteContract.FavoriteEntry.COLUMN_DESCRIPTION, MovieDetailFragment.this.mMovie.description);
+                    values.put(FavoriteContract.FavoriteEntry.COLUMN_RELEASE_DATE, MovieDetailFragment.this.mMovie.releaseDate);
+                    values.put(FavoriteContract.FavoriteEntry.COLUMN_USER_RATING, MovieDetailFragment.this.mMovie.userRating);
                     ContentResolver resolver = getContext().getContentResolver();
                     Uri uri = resolver.insert(FavoriteContract.FavoriteEntry.CONTENT_URI, values);
                     Log.d("MovieDetailFragment", "return URI: " + uri);
                 }
             });
 
-            ListView trailerList = (ListView) rootView.findViewById(R.id.list_trailers);
+            listView.addHeaderView(headerView);
 
+
+            // add trailers
             JsonTrailerAdapter trailerAdapter = new JsonTrailerAdapter(this.getContext());
+            setListAdapter(trailerAdapter);
+            getListView().setOnItemClickListener(trailerAdapter);
+
+
+            // Fetch Trailers
             FetchTrailersTask fetchTrailers = new FetchTrailersTask(trailerAdapter);
 
-            String trailersURL = Utility.BASE_URL
+            String trailersUrl = Utility.BASE_URL
                     + Utility.MOVIE + mMovie.id
                     + Utility.TRAILERS
                     + Utility.API_PARAMETER + Key.API_KEY;
-            fetchTrailers.execute(trailersURL);
+            fetchTrailers.execute(trailersUrl);
 
-//            TextView trailerListHeader = new TextView(getContext());
-//            trailerListHeader.setText("Trailers");
-//            trailerList.addHeaderView(trailerListHeader);
-            trailerList.setAdapter(trailerAdapter);
+            // Fetch Reviews
+            FetchReviewsTask fetchReviews = new FetchReviewsTask(trailerAdapter);
 
-            trailerList.setOnItemClickListener(trailerAdapter);
+            String reviewsUrl = Utility.BASE_URL
+                    + Utility.MOVIE + mMovie.id
+                    + Utility.REVIEWS
+                    + Utility.API_PARAMETER + Key.API_KEY;
+            fetchReviews.execute(reviewsUrl);
+
         }
 
-        return rootView;
     }
 }

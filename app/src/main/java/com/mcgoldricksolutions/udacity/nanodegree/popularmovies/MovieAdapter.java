@@ -53,35 +53,36 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
     public void switchMovieData() {
 
         SharedPreferences prefs = getContext().getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY, Context.MODE_PRIVATE);
-        int filter_type = prefs.getInt(Utility.FILTER_TYPE, 0);
+        int filter_type = prefs.getInt(Utility.FILTER_TYPE, Utility.POPULAR);
 
         String filterName = null;
 
         switch (filter_type) {
             case Utility.POPULAR:
                 filterName = Utility.API_MOST_POPULAR;
+                fetchMovieData(filterName);
                 break;
 
             case Utility.TOP_RATED:
                 filterName = Utility.API_TOP_RATED;
+                fetchMovieData(filterName);
                 break;
 
             case Utility.FAVORITES:
-
-
+                // not using this adapter when reading favorites
 
                 break;
             default:
-                // error handling
+                // TODO: error handling
+                //throw new Exception("No such filter type: " + filter_type);
         }
-
-
-        FetchMovieDataTask fetchTask = new FetchMovieDataTask(this);
-        fetchTask.execute(filterName);
-
 
     }
 
+    private void fetchMovieData(String filterName) {
+        FetchMovieDataTask fetchTask = new FetchMovieDataTask(this);
+        fetchTask.execute(filterName);
+    }
     /**
      * Allow the UI to call into adapter to switch out the relevant data.
      *

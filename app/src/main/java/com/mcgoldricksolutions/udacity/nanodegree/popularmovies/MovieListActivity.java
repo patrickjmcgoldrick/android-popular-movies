@@ -35,8 +35,10 @@ import java.util.ArrayList;
 public class MovieListActivity extends AppCompatActivity
     implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    //private MovieCursorAdapter movieAdapter;
-    private MovieAdapter movieAdapter;
+
+    private MovieCursorAdapter movieCursorAdapter;
+
+    private MovieAdapter movieHttpAdapter;
 
 
     /**
@@ -52,7 +54,7 @@ public class MovieListActivity extends AppCompatActivity
      * of the dialog confirms a change and then the preferenc
      * will be updated.
      */
-    private int temp_filter_choice = -1;
+    private int temp_filter_choice = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,9 +65,15 @@ public class MovieListActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        //Cursor movieCursor = getContentResolver().query()
-        //movieAdapter = new MovieCursorAdapter(this, movieCursor, 0);
-        movieAdapter = new MovieAdapter(this, new ArrayList<MovieData>());
+        temp_filter_choice = getFilterChoice();
+
+        Cursor movieCursor = getContentResolver().query(FavoriteContract.FavoriteEntry.CONTENT_URI,
+                                                            null,
+                                                            null, null,
+                                                            null);
+
+        movieCursorAdapter = new MovieCursorAdapter(this, movieCursor, 0);
+        movieHttpAdapter = new MovieAdapter(this, new ArrayList<MovieData>());
 
         //getLoaderManager().initLoader(FAVORTE_LOADER_ID, null, this);
 
@@ -74,16 +82,48 @@ public class MovieListActivity extends AppCompatActivity
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                MovieData movieData = movieAdapter.getItem(position);
+                //TODO:
+
+
                 //Create intent
                 Intent intent = new Intent(MovieListActivity.this, MovieDetailActivity.class);
-                intent.putExtra("movie_id", "" + movieData.id);
-                intent.putExtra("movie_detail", movieData);
+
+                if(temp_filter_choice == Utility.POPULAR
+                        || temp_filter_choice == Utility.TOP_RATED) {
+
+
+                    MovieData movieData = movieHttpAdapter.getItem(position);
+
+                    intent.putExtra("movie_id", "" + movieData.id);
+                    intent.putExtra("movie_detail", movieData);
+
+
+                } else {
+                    Cursor cursor = movieCursorAdapter.getCursor();
+                    int movieId = cursor.getInt(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_MOVIE_ID));
+                    intent.putExtra("movie_id", "" + movieId);
+
+                    MovieData movieData = new MovieData(movieId,
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_TITLE)),
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_POSTER_URL)),
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_DESCRIPTION)),
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_RELEASE_DATE)),
+                            cursor.getDouble(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_USER_RATING))
+                    );
+                    intent.putExtra("movie_detail", movieData);
+
+                }
                 //Start details activity
                 startActivity(intent);
+
             }
         });
-        gridView.setAdapter(movieAdapter);
+
+        if(getFilterChoice() < Utility.FAVORITES) {
+            gridView.setAdapter(movieHttpAdapter);
+        } else {
+            gridView.setAdapter(movieCursorAdapter);
+        }
 
         if (findViewById(R.id.movie_detail_container) != null) {
             // The detail container view will be present only in the
@@ -137,15 +177,10 @@ public class MovieListActivity extends AppCompatActivity
         //Initialize the Alert Dialog
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        SharedPreferences prefs =
-                MovieListActivity.this.getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY,
-                        Context.MODE_PRIVATE);
-        int initialFilterStatus = prefs.getInt(Utility.FILTER_TYPE, 0); // default to most popular
-
         // Set the dialog title
         builder.setTitle("Select Filter:")
             // setup choice with list of filters
-           .setSingleChoiceItems(R.array.filter_array, initialFilterStatus, new DialogInterface.OnClickListener() {
+           .setSingleChoiceItems(R.array.filter_array, getFilterChoice(), new DialogInterface.OnClickListener() {
 
                 @Override
                 public void onClick(DialogInterface dialog, int filter_choice_id) {
@@ -170,7 +205,16 @@ public class MovieListActivity extends AppCompatActivity
                     editor.putInt(Utility.FILTER_TYPE, temp_filter_choice);
                     editor.apply();
 
-                    movieAdapter.switchMovieData();
+                    // Get a reference to the ListView, and attach this adapter to it.
+                    GridView gridView = (GridView) findViewById(R.id.movies_grid);
+
+                    if (temp_filter_choice == Utility.FAVORITES) {
+                        gridView.setAdapter(movieCursorAdapter);
+                    } else if (temp_filter_choice == Utility.POPULAR
+                               || temp_filter_choice == Utility.TOP_RATED){
+                        gridView.setAdapter(movieHttpAdapter);
+                        movieHttpAdapter.switchMovieData();
+                    }
                 }
             })
             .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -183,6 +227,13 @@ public class MovieListActivity extends AppCompatActivity
         return builder.create();
     }
 
+    private int getFilterChoice() {
+        SharedPreferences prefs =
+                MovieListActivity.this.getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY,
+                        Context.MODE_PRIVATE);
+        return prefs.getInt(Utility.FILTER_TYPE, Utility.POPULAR); // default to most popular
+
+    }
     //////////////////////////
     // Loader Callbacks
     //////////////////////////

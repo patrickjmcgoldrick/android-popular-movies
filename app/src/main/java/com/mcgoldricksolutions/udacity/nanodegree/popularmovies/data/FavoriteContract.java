@@ -43,15 +43,20 @@ public class FavoriteContract {
         // Movie id as returned by API, to identify a particular movie
         public static final String COLUMN_MOVIE_ID = "movie_id";
 
+        // Movie title
+        public static final String COLUMN_TITLE = "title";
+
         // Movie poster url
         public static final String COLUMN_POSTER_URL = "poster_url";
 
-        // Movie Category
-        public static final String COLUMN_CATEGORY = "category";
+        // Movie description
+        public static final String COLUMN_DESCRIPTION = "description";
 
-        public static final int CATEGORY_TYPE_POPULAR = 0;
-        public static final int CATEGORY_TYPE_TOP_RATED = 1;
-        public static final int CATEGORY_TYPE_FAVORITE = 2;
+        // Movie release date
+        public static final String COLUMN_RELEASE_DATE = "release_date";
+
+        // Movie user rating
+        public static final String COLUMN_USER_RATING = "user_rating";
 
 
         public static Uri buildFavoriteUri(long id) {

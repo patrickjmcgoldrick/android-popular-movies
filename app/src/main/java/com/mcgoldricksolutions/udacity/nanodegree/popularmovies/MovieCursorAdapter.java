@@ -16,8 +16,8 @@ import com.squareup.picasso.Picasso;
  */
 public class MovieCursorAdapter extends CursorAdapter {
 
-    public MovieCursorAdapter(Context context, Cursor c, int flags) {
-        super(context, c, flags);
+    public MovieCursorAdapter(Context context, Cursor cursor, int flags) {
+        super(context, cursor, flags);
     }
 
     @Override

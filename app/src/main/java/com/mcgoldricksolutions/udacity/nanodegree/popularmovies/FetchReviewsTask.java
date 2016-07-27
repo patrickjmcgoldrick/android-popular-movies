@@ -17,9 +17,9 @@ import okhttp3.Response;
  *
  * Then load the movie data JSON into the movie adapter for the grid view.
  */
-public class FetchTrailersTask extends AsyncTask<String, String, String> {
+public class FetchReviewsTask extends AsyncTask<String, String, String> {
 
-    private static final String LOG_TAG = FetchTrailersTask.class.getSimpleName();
+    private static final String LOG_TAG = FetchReviewsTask.class.getSimpleName();
 
     OkHttpClient client = new OkHttpClient();
 
@@ -29,7 +29,7 @@ public class FetchTrailersTask extends AsyncTask<String, String, String> {
 
     String urlSuffix;
 
-    public FetchTrailersTask(JsonTrailerAdapter trailerAdapter) {
+    public FetchReviewsTask(JsonTrailerAdapter trailerAdapter) {
         this.mTrailerAdapter = trailerAdapter;
     }
 
@@ -74,7 +74,7 @@ public class FetchTrailersTask extends AsyncTask<String, String, String> {
             Log.e(LOG_TAG,
                     "Exception: " + exceptionToBeThrown.toString());
         } else {
-            mTrailerAdapter.setTrailerJsonData(jsonString);
+            mTrailerAdapter.setReviewJsonData(jsonString);
         }
     }
 

@@ -11,7 +11,7 @@ import com.mcgoldricksolutions.udacity.nanodegree.popularmovies.data.FavoriteCon
  */
 public class FavoriteDbHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     static final String DATABASE_NAME = "movies.db";
 
@@ -28,8 +28,11 @@ public class FavoriteDbHelper extends SQLiteOpenHelper {
 
                 // the ID of the movie from API
                 FavoriteEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
+                FavoriteEntry.COLUMN_TITLE + " TEXT NOT NULL, " +
                 FavoriteEntry.COLUMN_POSTER_URL + " TEXT NOT NULL, " +
-                FavoriteEntry.COLUMN_CATEGORY + " INTEGER NOT NULL, " +
+                FavoriteEntry.COLUMN_DESCRIPTION + " TEXT NOT NULL, " +
+                FavoriteEntry.COLUMN_RELEASE_DATE + " TEXT NOT NULL, " +
+                FavoriteEntry.COLUMN_USER_RATING + " REAL NOT NULL, " +
 
                 // Avoid duplicates
                 " UNIQUE (" + FavoriteEntry.COLUMN_MOVIE_ID + ") ON CONFLICT REPLACE);";

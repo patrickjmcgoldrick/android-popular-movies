@@ -46,21 +46,36 @@ public class JsonTrailerAdapter extends BaseAdapter
                                 implements AdapterView.OnItemClickListener {
 
     private static final String LOG_NAME = JsonTrailerAdapter.class.getSimpleName();
-    // Constants
-    private final static String YOUTUBE = "youtube";
 
+    // View Types
+    private static final int TYPE_SEPARATOR =  0;
+    private static final int TYPE_TRAILER   =  1;
+    private static final int TYPE_REVIEW    =  2;
+
+    // Trailer Labels
+    private final static String YOUTUBE = "youtube"; // parent element
     private final static String NAME = "name";
-
     private final static String SIZE = "size";
-
     private final static String SOURCE = "source";
-
     private final static String TYPE = "type";
+
+
+    // Review labels
+    private final static String RESULTS = "results";  // parent element
+    private final static String AUTHOR = "author";
+    private final static String CONTENT = "content";
+    private final static String URL = "url";
+
+    private final static String SEPARATOR_TRAILERS = "Trailers:";
+    private final static String SEPARATOR_REVIEWS = "Reviews:";
 
     // Member variables
 
-    String mJsonString;
-    JSONArray mYoutubeArray;
+    //String mJsonString;
+
+    JSONArray mTrailersArray;
+
+    JSONArray mReviewsArray;
 
     Context mContext;
     LayoutInflater mInflater;
@@ -73,94 +88,211 @@ public class JsonTrailerAdapter extends BaseAdapter
         this.mContext = context;
         this.mInflater = LayoutInflater.from(this.mContext);
 
-
     }
 
     /**
-     * Set Json Data on adapter and update ui
+     * Set Trailer Json Data on adapter and update ui
      *
      * @param jsonString
      */
-    public void setJsonData(String jsonString) {
-        this.mJsonString = jsonString;
+    public void setTrailerJsonData(String jsonString) {
 
         try {
-            JSONObject object = new JSONObject(mJsonString);
+            JSONObject object = new JSONObject(jsonString);
 
-            mYoutubeArray = object.getJSONArray(YOUTUBE);
+            mTrailersArray = object.getJSONArray(YOUTUBE);
 
-            Log.d(LOG_NAME, "array length: " + mYoutubeArray.length());
-
+            Log.d(LOG_NAME, "trailers + separator: " + getTrailerCount());
 
             notifyDataSetChanged();
 
         } catch (JSONException jsone) {
             Log.e(LOG_NAME, jsone.getMessage());
             if(jsonString != null) {
-                Log.e(LOG_NAME, mJsonString);
+                Log.e(LOG_NAME, jsonString);
             }
-            mJsonString = null;
         }
 
     }
 
+    /**
+     * Set Review Json Data on adapter and update ui
+     *
+     * @param jsonString
+     */
+    public void setReviewJsonData(String jsonString) {
+
+        try {
+            JSONObject object = new JSONObject(jsonString);
+
+            mReviewsArray = object.getJSONArray(RESULTS);
+
+            Log.d(LOG_NAME, "reviews + separator: " + getReviewCount());
+
+            notifyDataSetChanged();
+
+        } catch (JSONException jsone) {
+            Log.e(LOG_NAME, jsone.getMessage());
+            if(jsonString != null) {
+                Log.e(LOG_NAME, jsonString);
+            }
+        }
+
+    }
+
+    private int getTrailerCount() {
+        if(mTrailersArray != null) {
+            int count = mTrailersArray.length();
+            if(count > 0) {  // make sure we don't generate separator if no trailers
+                return count + 1;
+            } else {
+                return count;
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    private int getReviewCount() {
+        if(mReviewsArray != null) {
+            int count = mReviewsArray.length();
+            if(count > 0) {  // make sure we don't generate separator if no reviews
+                return count + 1;
+            } else {
+                return count;
+            }
+        } else {
+            return 0;
+        }
+    }
+
+
+    private boolean isTrailerSection(int position) {
+        if(position < getTrailerCount()) {
+            return true;
+        }
+        return false;
+    }
+
+    // calculate index where the reviews start
+    private int getReviewIndex(int position) {
+        return position - getTrailerCount();
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (isTrailerSection(position)) {
+            if(position == 0) {
+                return TYPE_SEPARATOR;
+            } else {
+                return TYPE_TRAILER;
+            }
+        } else {
+            int reviewIndex = getReviewIndex(position);
+            if(reviewIndex == 0) {
+                return TYPE_SEPARATOR;
+            } else {
+                return TYPE_REVIEW;
+            }
+        }
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return 3;
+    }
+
     @Override
     public int getCount() {
-        if(mJsonString == null) {
-            return 0;
-        } else {
-            return mYoutubeArray.length();
-        }
+        return getTrailerCount() + getReviewCount();
     }
 
     @Override
     public Object getItem(int position) {
 
-        if (mYoutubeArray == null) {
+        try {
+            if(isTrailerSection(position)) {
+                return mTrailersArray.getJSONObject(position-1);
+            }
+
+            int reviewIndex = getReviewIndex(position);
+            if(reviewIndex < getReviewCount()) {
+                return mReviewsArray.getJSONObject(reviewIndex - 1);
+            }
+        } catch (JSONException jsone) {
+            Log.e(LOG_NAME, "failed on getItem - position: " + position);
             return null;
         }
 
-        Object retObject = null;
-        try {
-            retObject = mYoutubeArray.getJSONObject(position);
-        } catch (JSONException jsone) {
-            Log.e(LOG_NAME, "failed on getItem");
-        }
-
-        return retObject;
+        return null; // we should never get here
     }
 
     @Override
     public long getItemId(int position) {
-        return 0;
+        return position;
     }
 
     @Override
     public View getView(int position, View view, ViewGroup parent) {
         MyViewHolder mViewHolder;
 
-        if (view == null) {
-            view = mInflater.inflate(R.layout.trailer_list_item, parent, false);
-            mViewHolder = new MyViewHolder(view);
-            view.setTag(mViewHolder);
-        } else {
-            mViewHolder = (MyViewHolder) view.getTag();
+        int rowType = getItemViewType(position);
+
+        TextView textView;
+        JSONObject row;
+
+        switch(rowType) {
+            case TYPE_SEPARATOR:  // Separator Row
+
+                view = mInflater.inflate(R.layout.list_item_header, parent, false);
+                textView = (TextView) view.findViewById(R.id.section_separator);
+                if(getReviewIndex(position) == 0) {
+                    textView.setText(SEPARATOR_REVIEWS);
+                } else {
+                    textView.setText(SEPARATOR_TRAILERS);
+                }
+                break;
+
+            case TYPE_TRAILER:    // Trailer Row
+
+                if (view == null) {
+                    view = mInflater.inflate(R.layout.list_item_trailer, parent, false);
+                    mViewHolder = new MyViewHolder(view);
+                    view.setTag(mViewHolder);
+                } else {
+                    mViewHolder = (MyViewHolder) view.getTag();
+                }
+
+                row = (JSONObject) getItem(position);
+
+                try {
+                    mViewHolder.trailerTitle.setText(row.getString(NAME));
+
+                } catch (JSONException json) {
+                    Log.e(LOG_NAME, "failed to access Trailer 'name'.");
+                }
+                break;
+
+
+            case TYPE_REVIEW:   // Review Row
+
+                view = mInflater.inflate(R.layout.list_item_review, parent, false);
+                row = (JSONObject) getItem(position);
+                try {
+                    textView = (TextView) view.findViewById(R.id.reviewContent);
+                    textView.setText(row.getString(CONTENT) + "\n\t -- " + row.getString(AUTHOR));
+
+                } catch (JSONException json) {
+                    Log.e(LOG_NAME, "failed to access Trailer 'name'.");
+                } catch (NullPointerException npe) {
+                    Log.e(LOG_NAME, "position: " + position);
+                    throw npe;
+                }
+                break;
         }
 
-        JSONObject row = (JSONObject)getItem(position);
-
-        try {
-            mViewHolder.trailerTitle.setText(row.getString(NAME));
-
-        } catch (JSONException json) {
-            Log.e(LOG_NAME, "failed to access Trailer 'name'.");
-        }
         return view;
     }
-
-//    //public Context getContext() {
-//        return mContext;
-//    }
 
     private class MyViewHolder {
         TextView trailerTitle;
