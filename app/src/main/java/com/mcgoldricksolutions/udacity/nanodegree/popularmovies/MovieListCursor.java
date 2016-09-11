@@ -15,7 +15,7 @@ public class MovieListCursor extends AbstractCursor {
 
     List<Movie> mMovies;
 
-    static String[] COLUMN_NAMES = {"id", "imageUrl"};
+    public static String[] COLUMN_NAMES = {"id", "imageUrl"};
     static String INVALID_COLUMN = "INVALID_COLUMN";
 
     /**
@@ -31,6 +31,10 @@ public class MovieListCursor extends AbstractCursor {
     ///////////////////
     // Implemntentation of Abstract methods.
     ///////////////////
+
+    public Movie getCurrentMovie() {
+        return mMovies.get(getPosition());
+    }
 
     @Override
     public int getCount() {

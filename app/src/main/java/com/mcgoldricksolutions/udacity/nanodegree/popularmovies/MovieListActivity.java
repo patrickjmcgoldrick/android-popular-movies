@@ -8,14 +8,21 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
@@ -23,6 +30,8 @@ import android.widget.Toast;
 import com.mcgoldricksolutions.udacity.nanodegree.popularmovies.data.FavoriteContract;
 
 import java.util.ArrayList;
+
+import okhttp3.internal.Util;
 
 /**
  * An activity representing a list of Movies. This activity
@@ -35,11 +44,7 @@ import java.util.ArrayList;
 public class MovieListActivity extends AppCompatActivity
     implements LoaderManager.LoaderCallbacks<Cursor> {
 
-
-    private MovieCursorAdapter movieCursorAdapter;
-
-    private MovieAdapter movieHttpAdapter;
-
+    public static String LOG_TAG = MovieListActivity.class.getSimpleName();
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -47,14 +52,18 @@ public class MovieListActivity extends AppCompatActivity
      */
     private boolean mTwoPane;
 
+    private MovieRecyclerAdapter movieRecyclerAdapter;
+
     private static final int FAVORTE_LOADER_ID = 0;
+
+    private int temp_filter_choice = -1;
 
     /**
      * The filter choice is stored here until the "OK" button
      * of the dialog confirms a change and then the preferenc
      * will be updated.
      */
-    private int temp_filter_choice = 0;
+//    private int temp_filter_choice = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,66 +74,7 @@ public class MovieListActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        temp_filter_choice = getFilterChoice();
-
-        Cursor movieCursor = getContentResolver().query(FavoriteContract.FavoriteEntry.CONTENT_URI,
-                                                            null,
-                                                            null, null,
-                                                            null);
-
-        movieCursorAdapter = new MovieCursorAdapter(this, movieCursor, 0);
-        movieHttpAdapter = new MovieAdapter(this, new ArrayList<MovieData>());
-
-        //getLoaderManager().initLoader(FAVORTE_LOADER_ID, null, this);
-
-        // Get a reference to the ListView, and attach this adapter to it.
-        GridView gridView = (GridView) findViewById(R.id.movies_grid);
-
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                //TODO:
-
-
-                //Create intent
-                Intent intent = new Intent(MovieListActivity.this, MovieDetailActivity.class);
-
-                if(temp_filter_choice == Utility.POPULAR
-                        || temp_filter_choice == Utility.TOP_RATED) {
-
-
-                    MovieData movieData = movieHttpAdapter.getItem(position);
-
-                    intent.putExtra("movie_id", "" + movieData.id);
-                    intent.putExtra("movie_detail", movieData);
-
-
-                } else {
-                    Cursor cursor = movieCursorAdapter.getCursor();
-                    int movieId = cursor.getInt(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_MOVIE_ID));
-                    intent.putExtra("movie_id", "" + movieId);
-
-                    MovieData movieData = new MovieData(movieId,
-                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_TITLE)),
-                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_POSTER_URL)),
-                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_DESCRIPTION)),
-                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_RELEASE_DATE)),
-                            cursor.getDouble(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_USER_RATING))
-                    );
-                    intent.putExtra("movie_detail", movieData);
-
-                }
-                //Start details activity
-                startActivity(intent);
-
-            }
-        });
-
-        if(getFilterChoice() < Utility.FAVORITES) {
-            gridView.setAdapter(movieHttpAdapter);
-        } else {
-            gridView.setAdapter(movieCursorAdapter);
-        }
-
+        // test for two pane view
         if (findViewById(R.id.movie_detail_container) != null) {
             // The detail container view will be present only in the
             // large-screen layouts (res/values-w900dp).
@@ -132,8 +82,44 @@ public class MovieListActivity extends AppCompatActivity
             // activity should be in two-pane mode.
             mTwoPane = true;
         }
+
+        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.movie_list);
+        assert recyclerView != null;
+
+        movieRecyclerAdapter = new MovieRecyclerAdapter(this, mTwoPane);
+        recyclerView.setAdapter(movieRecyclerAdapter);
+
+        loadFilterData();
+
     }
 
+    /**
+     * Lookup chosen filter and start a background thread
+     * to load appropriate data into recycler adapter
+     */
+    private void loadFilterData() {
+        int filter = Utility.getFilterChoice(this);
+
+        FetchMovieDataTask dataTask = null;
+        switch (filter) {
+            case Utility.POPULAR:
+                // start by loading popular movies
+                dataTask = new FetchMovieDataTask(movieRecyclerAdapter);
+                dataTask.execute(Utility.API_MOST_POPULAR);
+                break;
+            case Utility.TOP_RATED:
+                // start by loading top rated movies
+                dataTask = new FetchMovieDataTask(movieRecyclerAdapter);
+                dataTask.execute(Utility.API_TOP_RATED);
+                break;
+            case Utility.FAVORITES:
+                // load favorite data from database
+                getSupportLoaderManager().initLoader(FAVORTE_LOADER_ID, null, this);
+                break;
+        }
+
+        // TODO set header to show what we are filtering on.
+    }
 
     /**
      * Menu
@@ -142,7 +128,6 @@ public class MovieListActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-
 
         return true;
     }
@@ -180,7 +165,7 @@ public class MovieListActivity extends AppCompatActivity
         // Set the dialog title
         builder.setTitle("Select Filter:")
             // setup choice with list of filters
-           .setSingleChoiceItems(R.array.filter_array, getFilterChoice(), new DialogInterface.OnClickListener() {
+           .setSingleChoiceItems(R.array.filter_array, Utility.getFilterChoice(this), new DialogInterface.OnClickListener() {
 
                 @Override
                 public void onClick(DialogInterface dialog, int filter_choice_id) {
@@ -205,16 +190,8 @@ public class MovieListActivity extends AppCompatActivity
                     editor.putInt(Utility.FILTER_TYPE, temp_filter_choice);
                     editor.apply();
 
-                    // Get a reference to the ListView, and attach this adapter to it.
-                    GridView gridView = (GridView) findViewById(R.id.movies_grid);
+                    loadFilterData();
 
-                    if (temp_filter_choice == Utility.FAVORITES) {
-                        gridView.setAdapter(movieCursorAdapter);
-                    } else if (temp_filter_choice == Utility.POPULAR
-                               || temp_filter_choice == Utility.TOP_RATED){
-                        gridView.setAdapter(movieHttpAdapter);
-                        movieHttpAdapter.switchMovieData();
-                    }
                 }
             })
             .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -227,29 +204,32 @@ public class MovieListActivity extends AppCompatActivity
         return builder.create();
     }
 
-    private int getFilterChoice() {
-        SharedPreferences prefs =
-                MovieListActivity.this.getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY,
-                        Context.MODE_PRIVATE);
-        return prefs.getInt(Utility.FILTER_TYPE, Utility.POPULAR); // default to most popular
-
+    private void fetchMovieData(String filterName) {
+        FetchMovieDataTask fetchTask = new FetchMovieDataTask(movieRecyclerAdapter);
+        fetchTask.execute(filterName);
     }
+
     //////////////////////////
     // Loader Callbacks
     //////////////////////////
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
-        return new CursorLoader(this);
+
+        return new CursorLoader(this,
+                FavoriteContract.FavoriteEntry.CONTENT_URI,
+                null,
+                null, null,
+                null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        //movieAdapter.swapCursor(cursor);
+        movieRecyclerAdapter.swapCursor(cursor);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
-        //movieAdapter.swapCursor(null);
+        movieRecyclerAdapter.swapCursor(null);
     }
 }

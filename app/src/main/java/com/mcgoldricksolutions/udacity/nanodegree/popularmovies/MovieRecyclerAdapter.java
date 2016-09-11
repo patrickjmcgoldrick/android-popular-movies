@@ -1,8 +1,12 @@
 package com.mcgoldricksolutions.udacity.nanodegree.popularmovies;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,96 +18,151 @@ import com.squareup.picasso.Picasso;
 /**
  * Created by dirtbag on 8/15/16.
  */
-public class MovieRecyclerAdapter extends RecyclerView.Adapter<MovieRecyclerAdapter.MovieRecyclerAdapterViewHolder> {
+public class MovieRecyclerAdapter
+        extends RecyclerView.Adapter<MovieRecyclerAdapter.ViewHolder> {
 
-    private Cursor mCursor;
-    final private Context mContext;
-    //final private ForecastAdapterOnClickHandler mClickHandler;
-    //final private View mEmptyView;
-    //final private ItemChoiceManager mICM;
+    public static String LOG_TAG = MovieRecyclerAdapter.class.getSimpleName();
 
+    private Cursor mMovies = null;
 
-    public MovieRecyclerAdapter(Context context, int choiceMode) {
-        mContext = context;
-        //mClickHandler = dh;
-        //mEmptyView = emptyView;
-        //mICM = new ItemChoiceManager(this);
-        //mICM.setChoiceMode(choiceMode);
+    private AppCompatActivity mAppCompatActivity;
+    private boolean mTwoPane;
+
+    public MovieRecyclerAdapter(AppCompatActivity appCompatActivity, boolean twoPane) {
+        mAppCompatActivity = appCompatActivity;
+        mTwoPane = twoPane;
     }
 
     public Context getContext() {
-        return mContext;
+        return mAppCompatActivity;
     }
-    /*
-        This takes advantage of the fact that the viewGroup passed to onCreateViewHolder is the
-        RecyclerView that will be used to contain the view, so that it can get the current
-        ItemSelectionManager from the view.
 
-        One could implement this pattern without modifying RecyclerView by taking advantage
-        of the view tag to store the ItemChoiceManager.
-     */
+    public void swapCursor(Cursor movies) {
+        if (movies != null) {
+            mMovies = movies;
+            notifyDataSetChanged();
+        }
+    }
+
+    public Cursor getCursor() {
+        return mMovies;
+    }
 
     @Override
-    public MovieRecyclerAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
-        if ( viewGroup instanceof RecyclerView ) {
-            View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.movie_list, viewGroup, false);
-            view.setFocusable(true);
-            return new MovieRecyclerAdapterViewHolder(view);
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.movie_item, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
+        if(mMovies == null) {
+            return;
+        }
+
+        mMovies.moveToPosition(position);
+
+        // find column index from db or from ArrayList object
+        int posterIndex = -1;
+        if(Utility.getFilterChoice(mAppCompatActivity) == Utility.FAVORITES) {
+            posterIndex = mMovies.getColumnIndexOrThrow(FavoriteContract.FavoriteEntry.COLUMN_POSTER_URL);
         } else {
-            throw new RuntimeException("Not bound to RecyclerView");
+            posterIndex = mMovies.getColumnIndexOrThrow(MovieListCursor.COLUMN_NAMES[1]);
         }
-    }
 
-    @Override
-    public void onBindViewHolder(MovieRecyclerAdapterViewHolder movieRecyclerAdapterViewHolder, int position) {
-        mCursor.moveToPosition(position);
-
-        int posterIndex = mCursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_POSTER_URL);
+        // load poster image into UI
         if(posterIndex != -1) {
-            Picasso.with(mContext)
-                    .load(Utility.BASE_IMAGE_URL + mCursor.getString(posterIndex))
-                    .into(movieRecyclerAdapterViewHolder.mPosterView);
+            Picasso.with(mAppCompatActivity)
+                    .load(Utility.BASE_IMAGE_URL + mMovies.getString(posterIndex))
+                    .into(holder.mPosterView);
         }
+
+        holder.setPosition(position);
+
+        holder.mView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Movie movie = null;
+
+
+                // grab movie data for chosen film
+                int filterChoice = Utility.getFilterChoice(mAppCompatActivity);
+                if(filterChoice == Utility.POPULAR
+                        || filterChoice == Utility.TOP_RATED) {
+
+
+                    MovieListCursor listCursor = (MovieListCursor) getCursor();
+                    listCursor.moveToPosition(position);
+                    movie = listCursor.getCurrentMovie();
+
+                } else {
+                    Cursor cursor = getCursor();
+                    cursor.moveToPosition(position);
+                    int movieId = cursor.getInt(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_MOVIE_ID));
+
+                    movie = new Movie(movieId,
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_TITLE)),
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_POSTER_URL)),
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_DESCRIPTION)),
+                            cursor.getString(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_RELEASE_DATE)),
+                            cursor.getDouble(cursor.getColumnIndex(FavoriteContract.FavoriteEntry.COLUMN_USER_RATING))
+                    );
+
+                }
+
+                Log.d(LOG_TAG,"Movie: " + movie);
+                Log.d(LOG_TAG,"filterChoice: " + filterChoice);
+
+                // pass appropriate data to detail screen
+                if (mTwoPane) {
+                    Bundle arguments = new Bundle();
+                    arguments.putInt(MovieDetailFragment.ARG_MOVIE_ID, movie.id);
+                    arguments.putParcelable(MovieDetailFragment.ARG_MOVIE_DETAIL, movie);
+                    MovieDetailFragment fragment = new MovieDetailFragment();
+                    fragment.setArguments(arguments);
+                    mAppCompatActivity.getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.movie_detail_container, fragment)
+                            .commit();
+                } else {
+                    Context context = v.getContext();
+                    Intent intent = new Intent(context, MovieDetailActivity.class);
+                    intent.putExtra(MovieDetailFragment.ARG_MOVIE_ID, movie.id);
+                    intent.putExtra(MovieDetailFragment.ARG_MOVIE_DETAIL, movie);
+
+                    context.startActivity(intent);
+                }
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        if (null == mCursor) return 0;
-        return mCursor.getCount();
+        if(mMovies != null) {
+            return mMovies.getCount();
+        } else {
+            return 0;
+        }
     }
 
-    public void swapCursor(Cursor newCursor) {
-        mCursor = newCursor;
-        notifyDataSetChanged();
-        //mEmptyView.setVisibility(getItemCount() == 0 ? View.VISIBLE : View.GONE);
-    }
-
-    public Cursor getCursor() {
-        return mCursor;
-    }
-
-    /**
-     * Cache of the children views for a forecast list item.
-     */
-    public class MovieRecyclerAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        public final View mView;
         public final ImageView mPosterView;
+        public int mPosition;
 
-        public MovieRecyclerAdapterViewHolder(View view) {
+        public ViewHolder(View view) {
             super(view);
+            mView = view;
             mPosterView = (ImageView) view.findViewById(R.id.movie_image);
-            view.setOnClickListener(this);
         }
 
-
-        @Override
-        public void onClick(View v) {
-            int adapterPosition = getAdapterPosition();
-            mCursor.moveToPosition(adapterPosition);
-//            int dateColumnIndex = mCursor.getColumnIndex(WeatherContract.WeatherEntry.COLUMN_DATE);
-//            mClickHandler.onClick(mCursor.getLong(dateColumnIndex), this);
-//            mICM.onClick(this);
-
+        public void setPosition(int position) {
+            mPosition = position;
         }
+//        @Override
+//        public String toString() {
+//            return super.toString() + " '" + mPosterView.gets + "'";
+//        }
     }
 }

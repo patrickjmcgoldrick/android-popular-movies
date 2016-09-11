@@ -22,8 +22,8 @@ public class MovieJsonParser {
      * @param jsonString
      * @return
      */
-    public List<MovieData> parse(String jsonString) throws JSONException {
-        ArrayList<MovieData> movies = new ArrayList<>();
+    public List<Movie> parse(String jsonString) throws JSONException {
+        ArrayList<Movie> movies = new ArrayList<>();
 
         JSONObject object = new JSONObject(jsonString);
         JSONArray results = object.getJSONArray("results");
@@ -45,7 +45,7 @@ public class MovieJsonParser {
             releaseDate = movie.getString("release_date");
             userRating = movie.getDouble("vote_average");
 
-            MovieData movieData = new MovieData(id, title, posterUrl, description, releaseDate, userRating);
+            Movie movieData = new Movie(id, title, posterUrl, description, releaseDate, userRating);
             movies.add(movieData);
         }
 

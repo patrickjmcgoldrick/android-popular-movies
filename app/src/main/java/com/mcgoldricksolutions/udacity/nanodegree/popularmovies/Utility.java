@@ -1,5 +1,10 @@
 package com.mcgoldricksolutions.udacity.nanodegree.popularmovies;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import com.mcgoldricksolutions.udacity.nanodegree.popularmovies.data.FavoriteContract;
+
 /**
  * Created by dirtbag on 6/23/16.
  */
@@ -21,5 +26,13 @@ public class Utility {
     public static final int TOP_RATED = 1;
     public static final int FAVORITES = 2;
 
+
+    public static int getFilterChoice(Context context) {
+        SharedPreferences prefs =
+                context.getSharedPreferences(FavoriteContract.CONTENT_AUTHORITY,
+                        Context.MODE_PRIVATE);
+        return prefs.getInt(Utility.FILTER_TYPE, Utility.POPULAR); // default to most popular
+
+    }
 
 }

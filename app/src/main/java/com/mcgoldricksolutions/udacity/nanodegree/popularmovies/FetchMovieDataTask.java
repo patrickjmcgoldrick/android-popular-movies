@@ -1,6 +1,8 @@
 package com.mcgoldricksolutions.udacity.nanodegree.popularmovies;
 
+import android.database.Cursor;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -20,17 +22,20 @@ import okhttp3.Response;
  *
  * Then load the movie data JSON into the movie adapter for the grid view.
  */
-public class FetchMovieDataTask extends AsyncTask<String, String, List<MovieData>> {
+public class FetchMovieDataTask extends AsyncTask<String, String, List<Movie>> {
+
+    public static String LOG_TAG = FetchMovieDataTask.class.getSimpleName();
 
     OkHttpClient client = new OkHttpClient();
-    MovieAdapter movieAdapter;
+
+    MovieRecyclerAdapter mMovieRecyclerAdapter;
 
     private Exception exceptionToBeThrown;
 
     String urlSuffix;
 
-    public FetchMovieDataTask(MovieAdapter movieAdapter) {
-        this.movieAdapter = movieAdapter;
+    public FetchMovieDataTask(MovieRecyclerAdapter movieRecyclerAdapter) {
+        mMovieRecyclerAdapter = movieRecyclerAdapter;
     }
 
 
@@ -40,7 +45,7 @@ public class FetchMovieDataTask extends AsyncTask<String, String, List<MovieData
      * @param suffix
      * @return
      */
-    protected List<MovieData> doInBackground(String... suffix) {
+    protected List<Movie> doInBackground(String... suffix) {
 
         int count = suffix.length;
 
@@ -63,7 +68,7 @@ public class FetchMovieDataTask extends AsyncTask<String, String, List<MovieData
         }
 
         MovieJsonParser parser = new MovieJsonParser();
-        List<MovieData> movies = null;
+        List<Movie> movies = null;
 
         try {
             movies = parser.parse(response);
@@ -80,15 +85,17 @@ public class FetchMovieDataTask extends AsyncTask<String, String, List<MovieData
      *
      * @param movies
      */
-    protected void onPostExecute(List<MovieData> movies) {
+    protected void onPostExecute(List<Movie> movies) {
 
         if(exceptionToBeThrown != null) {
-            Toast.makeText(movieAdapter.getContext(),
+            Toast.makeText(mMovieRecyclerAdapter.getContext(),
                     "Exception: " + exceptionToBeThrown.toString(),
                     Toast.LENGTH_LONG)
                     .show();
         } else {
-            movieAdapter.updateMovieData(urlSuffix, movies);
+            Cursor movieCursor = new MovieListCursor(movies);
+            mMovieRecyclerAdapter.swapCursor(movieCursor);
+            Log.i(LOG_TAG, "cursorSize: " + movieCursor.getCount());
         }
     }
 

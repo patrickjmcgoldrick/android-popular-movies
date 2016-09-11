@@ -35,7 +35,7 @@ public class MovieDetailFragment extends ListFragment {
 
     public static final String ARG_MOVIE_DETAIL = "movie_detail";
 
-    private MovieData mMovie;
+    private Movie mMovie;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -51,10 +51,13 @@ public class MovieDetailFragment extends ListFragment {
             // Load the Movie content specified by the fragment
             // arguments. In a real-world scenario, use a Loader
             // to load content from a content provider.
-            mMovie = (MovieData) getArguments().getParcelable(ARG_MOVIE_DETAIL);
+            mMovie = (Movie) getArguments().getParcelable(ARG_MOVIE_DETAIL);
 
             Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = (CollapsingToolbarLayout) activity.findViewById(R.id.toolbar_layout);
+            if (appBarLayout != null) {
+                appBarLayout.setTitle(mMovie.title);
+            }
 
          }
     }
@@ -85,7 +88,6 @@ public class MovieDetailFragment extends ListFragment {
 
             ((TextView) headerView.findViewById(R.id.movie_description)).setText(mMovie.description);
             ((TextView) headerView.findViewById(R.id.movie_release_date)).setText(mMovie.getReleaseDateYear());
-            //((TextView) rootView.findViewById(R.id.movie_description)).setText(mMovie.description);
             ((TextView) headerView.findViewById(R.id.movie_user_rating)).setText(mMovie.userRating + "/10");
 
             Button btnFavorite = (Button) headerView.findViewById(R.id.btn_favorite);
