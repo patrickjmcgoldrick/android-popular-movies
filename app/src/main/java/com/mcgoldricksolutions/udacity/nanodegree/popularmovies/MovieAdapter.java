@@ -19,7 +19,7 @@ import java.util.List;
  *
  * Adapter that holds movie data for grid view.
  */
-public class MovieAdapter  extends ArrayAdapter<MovieData> {
+public class MovieAdapter  extends ArrayAdapter<Movie> {
 
     private static final String LOG_TAG = MovieAdapter.class.getSimpleName();
 
@@ -36,7 +36,7 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
      * @param context The current context. Used to inflate the layout file.
      * @param movies  A List of AndroidFlavor objects to display in a list
      */
-    public MovieAdapter(Activity context, List<MovieData> movies) {
+    public MovieAdapter(Activity context, List<Movie> movies) {
         // Here, we initialize the ArrayAdapter's internal storage for the context and the list.
         // the second argument is used when the ArrayAdapter is populating a single TextView.
         // Because this is a custom adapter for two TextViews and an ImageView, the adapter is not
@@ -80,8 +80,8 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
     }
 
     private void fetchMovieData(String filterName) {
-        FetchMovieDataTask fetchTask = new FetchMovieDataTask(this);
-        fetchTask.execute(filterName);
+//        FetchMovieDataTask fetchTask = new FetchMovieDataTask(this);
+//        fetchTask.execute(filterName);
     }
     /**
      * Allow the UI to call into adapter to switch out the relevant data.
@@ -89,7 +89,7 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
      * @param suffix
      * @param movieData
      */
-    public void updateMovieData(String suffix, List<MovieData> movieData) {
+    public void updateMovieData(String suffix, List<Movie> movieData) {
 //        // if new data, add to HashMap
 //        if(suffix != null) {
 //            movieDataLookup.put(suffix, movieData);
@@ -118,7 +118,7 @@ public class MovieAdapter  extends ArrayAdapter<MovieData> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         // Gets the AndroidFlavor object from the ArrayAdapter at the appropriate position
-        MovieData movie = getItem(position);
+        Movie movie = getItem(position);
 
         // Adapters recycle views to AdapterViews.
         // If this is a new View object we're getting, then inflate the layout.
